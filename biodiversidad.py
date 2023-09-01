@@ -28,9 +28,9 @@ titulos = driver.find_elements(By.XPATH, prefijo)
 for titulo in titulos:
     print(titulo.text)
 
-#Funcion para navegar por el arbol taxonomico
-def navegacion (prefijo,rumbo):
-    xpath = f"{prefijo}/li[{i-rumbo}]/div/img[1]"
+#Función para navegar por el arbol taxonomico
+def navegacion (prefijo,rumbo,target):
+    xpath = f"{prefijo}/li[{i-rumbo}]/div/{target}"
     anterior = driver.find_element(By.XPATH, xpath)
     anterior.click()
     sleep(0.5)
@@ -39,25 +39,33 @@ def navegacion (prefijo,rumbo):
 for i in range(1, elementos + 1):
     try:
         try:
-            navegacion(prefijo,1) #intenta contraer arbol anterior
+            navegacion(prefijo,1,"img[1]") #Intenta contraer arbol anterior
         except:
             pass
-        navegacion(prefijo,0) #expandir arbol
-
+        navegacion(prefijo,0,"img[1]") #Expandir arbol
         prefijo2 = f"{prefijo}/li[{i}]/ul"
+        
         for i in range(1, elementos + 1):
             try:
                 try:
-                    navegacion(prefijo2,1) #intenta contraer arbol anterior
+                    navegacion(prefijo2,1,"img[1]") #Intenta contraer arbol anterior
                 except:
                     pass
-                navegacion(prefijo2,0) #expandir arbol
+                navegacion(prefijo2,0,"img[1]") #Expandir arbol
+                prefijo3 = f"{prefijo2}/li[{i}]/ul"
+
+                for i in range(1, elementos + 1):
+                    try:
+                        try:
+                            pass
+                            navegacion(prefijo3,1,"input") #Intenta Desseleccionar especie
+                        except:
+                            pass
+                        navegacion(prefijo3,0,"input") #Seleccionar especie
+                    except:
+                        break
             except:
                 break
-            
-
-
-        
     except:
         break
 
