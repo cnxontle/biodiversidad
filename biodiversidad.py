@@ -33,7 +33,7 @@ def navegacion (prefijo,rumbo,target):
     xpath = f"{prefijo}/li[{i-rumbo}]/div/{target}"
     anterior = driver.find_element(By.XPATH, xpath)
     anterior.click()
-    sleep(0.5)
+    sleep(0.5) #tiempo de espera de medio segundo
 
 #Iterar sobre clases taxonomicas
 for i in range(1, elementos + 1):
