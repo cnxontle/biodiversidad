@@ -12,7 +12,7 @@ class Scraper:
         # Configurar opciones
         self.opts = Options()
         self.opts.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
-        # self.opts.add_argument("--headless")  # Modo automático
+        self.opts.add_argument("--headless")  # Modo automático
 
         # Descarga automática del ChromeDriver
         self.driver = webdriver.Chrome(
