@@ -64,6 +64,9 @@ for i in range(1, elementos + 1):
                         #Definir ruta de destino y url de descarga
                         current_directory = os.getcwd()
                         destination_path = os.path.join(current_directory, "database", f"{base}.kmz")
+                        database_directory = os.path.join(current_directory, "database")
+                        if not os.path.exists(database_directory):
+                            os.makedirs(database_directory)
                         url = f"http://www.conabio.gob.mx/informacion/gis/maps/kmz/{base}.kmz"
                         
                         #Si hay respuesta guarda el contenido del archivo KML en la ruta de destino
