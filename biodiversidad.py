@@ -5,6 +5,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager # pip install webdriver-manager
+import requests
+import os
 
 #Configurar opciones
 opts = Options()
@@ -22,11 +24,6 @@ sleep(5)#tiempo de espera a que cargue la pagina
 
 prefijo = '/html/body/div[4]/div/div/div/div[2]/div/div/div/div[2]/ul/li/ul/li[2]/ul/li[2]/ul'
 elementos = 10000
-
-#Seleccion de clases taxonomicas
-titulos = driver.find_elements(By.XPATH, prefijo)
-for titulo in titulos:
-    print(titulo.text)
 
 #Función para navegar por el arbol taxonomico
 def navegacion (prefijo,rumbo,target):
@@ -62,13 +59,25 @@ for i in range(1, elementos + 1):
                         except:
                             pass
                         navegacion(prefijo3,0,"input") #Seleccionar especie
+                        base=driver.current_url.split("/")[-1]
+                        
+                        #Definir ruta de destino y url de descarga
+                        current_directory = os.getcwd()
+                        destination_path = os.path.join(current_directory, "database", f"{base}.kmz")
+                        url = f"http://www.conabio.gob.mx/informacion/gis/maps/kmz/{base}.kmz"
+                        
+                        #Si hay respuesta guarda el contenido del archivo KML en la ruta de destino
+                        response = requests.get(url)
+                        if response.status_code == 200:
+                            with open(destination_path, "wb") as kml_file:
+                                kml_file.write(response.content)
+                        else:
+                            print("No se pudo descargar el archivo KML. Código de estado:", response.status_code)
                     except:
                         break
             except:
                 break
     except:
         break
-
-
 
 driver.quit()
