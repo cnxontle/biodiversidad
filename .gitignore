@@ -1,3 +1,5 @@
 **/.kmz
 **/database
 **/.zip
+**/__pycache__
+**/.pyc
