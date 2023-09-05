@@ -24,7 +24,7 @@ class Scraper:
         xpath = f"{prefix}/li[{i-route}]/div/{target}"
         element = self.driver.find_element(By.XPATH, xpath)
         element.click()
-        sleep(0.5)  # Tiempo de espera de medio segundo
+        sleep(0.75)  # Tiempo de espera de la navegación
        
     def scrape(self):
         # Acceso a la página
@@ -67,30 +67,32 @@ class Scraper:
                                 destination_path = os.path.join(current_directory, "database", f"{base}.kmz")
                                 destination_path2 = os.path.join(current_directory, "database", f"{base}.zip")
                                 
-                                #comprobar si ya existe la carpeta database
+                                # Comprobar si ya existe la carpeta database
                                 database_directory = os.path.join(current_directory, "database")
                                 if not os.path.exists(database_directory):
                                     os.makedirs(database_directory)
 
-                                #Definir URLs de descarga
+                                # Definir URLs de descarga
                                 url = f"http://www.conabio.gob.mx/informacion/gis/maps/kmz/{base}.kmz"
                                 url2 = f"http://geoportal.conabio.gob.mx/metadatos/doc/fgdc/{base}.zip"
 
-                                # Si hay respuesta guarda el contenido del archivo KML en la ruta de destino
+                                # Guarda el archivo KML en la ruta de destino
                                 response = requests.get(url)
                                 if response.status_code == 200:
                                     with open(destination_path, "wb") as kml_file:
                                         kml_file.write(response.content)
                                 else:
                                     print("No se pudo descargar el archivo KML. Código de estado:", response.status_code)
+                                    break
                                 
-                                # Si hay respuesta guarda el contenido del archivo ZIP en la ruta de destino
+                                # Guarda el archivo ZIP en la ruta de destino
                                 response2 = requests.get(url2)
                                 if response2.status_code == 200:
                                     with open(destination_path2, "wb") as zip_file:
                                         zip_file.write(response2.content)
                                 else:
-                                    print("No se pudo descargar el archivo KML. Código de estado:", response2.status_code)
+                                    print("No se pudo descargar el archivo ZIP. Código de estado:", response2.status_code)
+                                    break
                             except:
                                 break
                     except:
@@ -98,3 +100,7 @@ class Scraper:
             except:
                 break
         self.driver.quit()
+
+if __name__ == "__main__":
+    scraper = Scraper()
+    scraper.scrape()
