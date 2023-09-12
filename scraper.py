@@ -133,8 +133,9 @@ for i in range(1, elementos + 1):
                             sleep(0.5)
                             driver.execute_script(ajuste_coordenadas)
                             
-                            #WebDriverWait(driver, 10).until(
-                            #    EC.presence_of_all_elements_located((By.XPATH, '//*[@id="mview-panel"]')))
+                            # Espera a que cargue el layer
+                            WebDriverWait(driver, 10).until(
+                                EC.presence_of_all_elements_located((By.XPATH, '//*[@id="mview-panel"]')))
                             sleep(0.75)
 
                             # Verificar si hay presencia de la especie en el poligono para guardar la información
