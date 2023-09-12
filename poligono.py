@@ -4,7 +4,7 @@ import tkinter as tk
 class PolygonDrawer:
     def __init__(self):
         self.root = tk.Tk()
-      
+        
         self.root.attributes("-alpha", 0.1)  # Configura la transparencia (0.0 - 1.0)
         self.root.wait_visibility()
         self.canvas = tk.Canvas(self.root, width=800, height=600)
