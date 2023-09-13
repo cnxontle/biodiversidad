@@ -76,7 +76,6 @@ sleep(1)
 # Captura inicial
 capturas = captura.PolygonCapture(polygon_points)
 screenshot_init = capturas.capture_polygon()
-print(screenshot_init)
 
 # Busqueda de especies
 for i in range(1, elementos + 1):
@@ -134,10 +133,10 @@ for i in range(1, elementos + 1):
                             driver.execute_script(ajuste_coordenadas)
                             
                             # Espera a que cargue el layer
+                            
                             WebDriverWait(driver, 10).until(
-                                EC.presence_of_all_elements_located((By.XPATH, '//*[@id="mview-panel"]')))
-                            sleep(0.75)
-
+                                EC.visibility_of_all_elements_located((By.XPATH, '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[9]')))
+                            
                             # Verificar si hay presencia de la especie en el poligono para guardar la información
                             screenshot_k = ""
                             screenshot_k = capturas.capture_polygon()

@@ -7,16 +7,16 @@ class PolygonDrawer:
         
         self.root.attributes("-alpha", 0.1)  # Configura la transparencia (0.0 - 1.0)
         self.root.wait_visibility()
-        self.canvas = tk.Canvas(self.root, width=800, height=600)
-        self.ventana_ancho = 800
-        self.ventana_alto = 600
+        self.canvas = tk.Canvas(self.root, width=850, height=650)
+        self.ventana_ancho = 850
+        self.ventana_alto = 650
         
         # Obtiene el tamaño de la pantalla
         self.pantalla_ancho = self.root.winfo_screenwidth()
         self.pantalla_alto = self.root.winfo_screenheight()
 
         # Calcula las coordenadas para centrar la ventana
-        self.x = ((self.pantalla_ancho - self.ventana_ancho) // 2)+30
+        self.x = ((self.pantalla_ancho - self.ventana_ancho) // 2)+35
         self.y = (self.pantalla_alto - self.ventana_alto) // 2
 
         # Configura la geometría de la ventana y centra la ventana
