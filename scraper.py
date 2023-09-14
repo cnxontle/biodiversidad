@@ -97,14 +97,22 @@ for i in range(1, elementos + 1):
                 prefix3 = f"{prefix2}/li[{j}]/ul"
 
                 for k in range(1, elementos + 1):
+                    
+                #agregar codigo para modificar route...    
+                    
+                    
                     try:
                         try:
-                            pass
                             navigate(prefix3, 1, "input",k)  # Intenta deseleccionar especie
                         except:
                             pass
                         navigate(prefix3, 0, "input",k)  # Seleccionar especie
                         base = driver.current_url.split("/")[-1]
+
+                        #agregar codigo para leer y escribir en diccionario...
+
+
+                        
 
                         # Evaluar limites y Superposicion
                         limites_k = []
@@ -132,10 +140,10 @@ for i in range(1, elementos + 1):
                             sleep(0.5)
                             driver.execute_script(ajuste_coordenadas)
                             
-                            # Espera a que cargue el layer
-                            
-                            WebDriverWait(driver, 10).until(
-                                EC.visibility_of_all_elements_located((By.XPATH, '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[9]')))
+                            # Espera a que cargue el mapa
+                            for i in range(1, 9):
+                                xpath = '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[' + str(i) + ']'
+                                WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
                             
                             # Verificar si hay presencia de la especie en el poligono para guardar la información
                             screenshot_k = ""
