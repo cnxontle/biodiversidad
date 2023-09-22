@@ -14,7 +14,6 @@ import winsound
 import pymsgbox
 import pickle
 
-
 # Configurar opciones
 opts = Options()
 opts.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
@@ -45,7 +44,6 @@ def traslape(limites_mapa1,limites_mapa2):
     else:
         if limites_mapa2[1]>= limites_mapa1[0]:
             superposicion = False
-                            
     if limites_mapa2[2] <= limites_mapa1[2]:
         if limites_mapa2[2] <= limites_mapa1[3]:
             superposicion = False
@@ -66,11 +64,13 @@ prefix = '/html/body/div[4]/div/div/div/div[2]/div/div/div/div[2]/ul/li/ul/li[2]
 elementos = 10000
 change = 0
 
-
 # Ajustar posicion y zoom inicial
 valor = pymsgbox.prompt('Ingresa las coordenadas y el zoom separados por comas:',title='Ubicación de Inicio', default='Longitud,Latitud,Zoom')
-ajuste_coordenadas = f'map.panTo([{valor.split(",")[1]}, {valor.split(",")[0]}]);'
-ajuste_zoom = f'map.setZoom({valor.split(",")[2]});'
+zoom = valor.split(",")[2]
+coordenada1 = valor.split(",")[1]
+coordenada2 = valor.split(",")[0]
+ajuste_coordenadas = f'map.panTo([{coordenada1}, {coordenada2}]);'
+ajuste_zoom = f'map.setZoom({zoom});'
 driver.execute_script(ajuste_zoom)
 sleep(0.2)
 driver.execute_script(ajuste_coordenadas)
@@ -97,7 +97,6 @@ if os.path.exists("limites.pkl"):
     modo_apertura = "rb+"
 else:
     modo_apertura = "wb"
-
 with open("limites.pkl", modo_apertura) as archivo:
     if modo_apertura == "rb+":
         try:
@@ -106,7 +105,6 @@ with open("limites.pkl", modo_apertura) as archivo:
             limites = {}
     else:
         limites = {}
-
 
 # Busqueda de especies
     for i in range(1, elementos + 1):
@@ -156,10 +154,8 @@ with open("limites.pkl", modo_apertura) as archivo:
                                     limites_k = []
                                     limites_k = driver.execute_script(script_obtener_limites)
                                     limites[clave] = limites_k
-                                
                                     superposicion= traslape(limites_inicio,limites_k)
                                     
-
                             if superposicion == True:
                                 base = driver.current_url.split("/")[-1]
                                 # Ajustar el Mapa
@@ -181,7 +177,6 @@ with open("limites.pkl", modo_apertura) as archivo:
                                     
                                     # Definir ruta de destino
                                     current_directory = os.getcwd()
-                                    destination_path = os.path.join(current_directory, "database", f"{base}.kmz")
                                     destination_path2 = os.path.join(current_directory, "database", f"{base}.zip")
                                             
                                     # Comprobar si ya existe la carpeta database
@@ -190,18 +185,8 @@ with open("limites.pkl", modo_apertura) as archivo:
                                         os.makedirs(database_directory)
 
                                     # Definir URLs de descarga
-                                    url = f"http://www.conabio.gob.mx/informacion/gis/maps/kmz/{base}.kmz"
                                     url2 = f"http://geoportal.conabio.gob.mx/metadatos/doc/fgdc/{base}.zip"
 
-                                    # Guarda el archivo KML en la ruta de destino
-                                    response = requests.get(url)
-                                    if response.status_code == 200:
-                                        with open(destination_path, "wb") as kml_file:
-                                            kml_file.write(response.content)
-                                    else:
-                                        print("No se pudo descargar el archivo KML. Código de estado:", response.status_code)
-                                        break
-                                            
                                     # Guarda el archivo ZIP en la ruta de destino
                                     response2 = requests.get(url2)
                                     if response2.status_code == 200:
@@ -210,7 +195,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                                     else:
                                         print("No se pudo descargar el archivo ZIP. Código de estado:", response2.status_code)
                                         break
-                                    sleep(0.5)
+                            sleep(0.3)
                         except:
                             try:
                                 navigate(prefix3, 1 + change, "input",k)  # Intenta deseleccionar especie
@@ -225,6 +210,5 @@ with open("limites.pkl", modo_apertura) as archivo:
     if modo_apertura == "rb+":
         archivo.seek(0)
     pickle.dump(limites, archivo)
-
 
 driver.quit()
