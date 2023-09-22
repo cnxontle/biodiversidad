@@ -33,7 +33,10 @@ def navigate(prefix, route, target,i):
     xpath = f"{prefix}/li[{i-route}]/div/{target}"
     element = driver.find_element(By.XPATH, xpath)
     element.click()
-    sleep(0.3)  # Modificar Tiempo de espera de la navegación
+    if target == "input":
+        xpath_temas = '//*[@id="footer-right"]/strong[1]'
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, xpath_temas)))
+    sleep(0.3)  # Tiempo de espera de la navegacion en el arbol
 
 # Evalua si los limites de dos mapas se superponen en su area
 def traslape(limites_mapa1,limites_mapa2):
@@ -194,8 +197,8 @@ with open("limites.pkl", modo_apertura) as archivo:
                                             zip_file.write(response2.content)
                                     else:
                                         print("No se pudo descargar el archivo ZIP. Código de estado:", response2.status_code)
-                                        break
-                            sleep(0.3)
+                                        #break
+                            #sleep(0.5)
                         except:
                             try:
                                 navigate(prefix3, 1 + change, "input",k)  # Intenta deseleccionar especie
