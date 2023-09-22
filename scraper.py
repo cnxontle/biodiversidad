@@ -14,6 +14,7 @@ import winsound
 import pymsgbox
 import pickle
 
+
 # Configurar opciones
 opts = Options()
 opts.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
@@ -33,7 +34,7 @@ def navigate(prefix, route, target,i):
     xpath = f"{prefix}/li[{i-route}]/div/{target}"
     element = driver.find_element(By.XPATH, xpath)
     element.click()
-    sleep(0.3)  # Tiempo de espera de la navegación
+    sleep(0.3)  # Modificar Tiempo de espera de la navegación
 
 # Evalua si los limites de dos mapas se superponen en su area
 def traslape(limites_mapa1,limites_mapa2):
@@ -63,6 +64,8 @@ element.click() # Cerrar mensaje de inicio
 # Parametros de navegación
 prefix = '/html/body/div[4]/div/div/div/div[2]/div/div/div/div[2]/ul/li/ul/li[2]/ul/li[2]/ul'
 elementos = 10000
+change = 0
+
 
 # Ajustar posicion y zoom inicial
 valor = pymsgbox.prompt('Ingresa las coordenadas y el zoom separados por comas:',title='Ubicación de Inicio', default='Longitud,Latitud,Zoom')
@@ -103,7 +106,8 @@ with open("limites.pkl", modo_apertura) as archivo:
             limites = {}
     else:
         limites = {}
-            
+
+
 # Busqueda de especies
     for i in range(1, elementos + 1):
         try:
@@ -124,30 +128,40 @@ with open("limites.pkl", modo_apertura) as archivo:
                     prefix3 = f"{prefix2}/li[{j}]/ul"
 
                     for k in range(1, elementos + 1):
-                        
-                    #agregar codigo para modificar route...    
-                        
-                        
                         try:
-                            try:
-                                navigate(prefix3, 1, "input",k)  # Intenta deseleccionar especie
-                            except:
-                                pass
-                            navigate(prefix3, 0, "input",k)  # Seleccionar especie
-                            base = driver.current_url.split("/")[-1]
+                            contenido = driver.find_element(By.XPATH, f"{prefix3}/li[{k}]/div/a/span")
+                            clave = contenido.text
+                            seleccionar = True
+                            eval_traslape = True
 
-                            #agregar codigo para leer y escribir en diccionario...
-                            #limites["nueva_clave"] = "nuevo_valor"
+                            # Si la clave se encuentra en el diccionario evaluar superposicion
+                            if clave in limites:
+                                superposicion= traslape(limites_inicio,limites[clave])
+                                eval_traslape = False
+                                if superposicion == False:
+                                    change += 1
+                                    seleccionar = False
 
-                            
+                            # Si la clave no se encuentra en el diccionario, seleccionar la especie
+                            if seleccionar == True:
+                                try:
+                                    navigate(prefix3, 1 + change, "input",k)  # Intenta deseleccionar especie
+                                except:
+                                    pass
+                                navigate(prefix3, 0, "input",k)  # Seleccionar especie
+                                change = 0
+ 
+                                # Evaluar limites y Superposicion
+                                if eval_traslape == True:
+                                    limites_k = []
+                                    limites_k = driver.execute_script(script_obtener_limites)
+                                    limites[clave] = limites_k
+                                
+                                    superposicion= traslape(limites_inicio,limites_k)
+                                    
 
-                            # Evaluar limites y Superposicion
-                            limites_k = []
-                            limites_k = driver.execute_script(script_obtener_limites)
-                            print(limites_k)
-                            
-                            superposicion= traslape(limites_inicio,limites_k)
                             if superposicion == True:
+                                base = driver.current_url.split("/")[-1]
                                 # Ajustar el Mapa
                                 driver.execute_script(ajuste_zoom)
                                 sleep(0.5)
@@ -157,7 +171,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                                 for i in range(1, 9):
                                     xpath = '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[' + str(i) + ']'
                                     WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
-                                
+                                sleep(0.1)
                                 # Verificar si hay presencia de la especie en el poligono para guardar la información
                                 screenshot_k = ""
                                 screenshot_k = capturas.capture_polygon()
@@ -198,6 +212,10 @@ with open("limites.pkl", modo_apertura) as archivo:
                                         break
                                     sleep(0.5)
                         except:
+                            try:
+                                navigate(prefix3, 1 + change, "input",k)  # Intenta deseleccionar especie
+                            except:
+                                pass
                             break
                 except:
                     break
@@ -205,7 +223,7 @@ with open("limites.pkl", modo_apertura) as archivo:
             break
     # Escribir los limites en el archivo limites.pkl
     if modo_apertura == "rb+":
-        archivo.seek(0) # Regresar al inicio del archivo
+        archivo.seek(0)
     pickle.dump(limites, archivo)
 
 
