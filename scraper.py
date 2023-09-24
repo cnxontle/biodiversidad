@@ -167,10 +167,13 @@ with open("limites.pkl", modo_apertura) as archivo:
                                 driver.execute_script(ajuste_coordenadas)
                                 
                                 # Espera a que cargue el mapa
-                                for i in range(1, 9):
-                                    xpath = '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[' + str(i) + ']'
-                                    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
-                                sleep(0.1)
+                                try:
+                                    for i in range(1, 9):
+                                        xpath = '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[' + str(i) + ']'
+                                        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                                    sleep(0.1)
+                                except:
+                                    pass
                                 # Verificar si hay presencia de la especie en el poligono para guardar la información
                                 screenshot_k = ""
                                 screenshot_k = capturas.capture_polygon()
@@ -196,7 +199,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                                         with open(destination_path2, "wb") as zip_file:
                                             zip_file.write(response2.content)
                                     else:
-                                        print("No se pudo descargar el archivo ZIP. Código de estado:", response2.status_code)
+                                        print("No se pudo descargar el archivo:", base)
                                         #break
                             #sleep(0.5)
                         except:
