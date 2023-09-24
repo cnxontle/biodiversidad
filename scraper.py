@@ -66,6 +66,7 @@ element.click() # Cerrar mensaje de inicio
 prefix = '/html/body/div[4]/div/div/div/div[2]/div/div/div/div[2]/ul/li/ul/li[2]/ul/li[2]/ul'
 elementos = 10000
 change = 0
+especie = ""
 
 # Ajustar posicion y zoom inicial
 valor = pymsgbox.prompt('Ingresa las coordenadas y el zoom separados por comas:',title='Ubicación de Inicio', default='Longitud,Latitud,Zoom')
@@ -132,76 +133,81 @@ with open("limites.pkl", modo_apertura) as archivo:
                         try:
                             contenido = driver.find_element(By.XPATH, f"{prefix3}/li[{k}]/div/a/span")
                             clave = contenido.text
-                            seleccionar = True
-                            eval_traslape = True
+                            palabras = clave.split()
+                            especie_actual = " ".join(palabras[:2])
+                            
+                            if especie != especie_actual:
+                                seleccionar = True
+                                eval_traslape = True
 
-                            # Si la clave se encuentra en el diccionario evaluar superposicion
-                            if clave in limites:
-                                superposicion= traslape(limites_inicio,limites[clave])
-                                eval_traslape = False
-                                if superposicion == False:
-                                    change += 1
-                                    seleccionar = False
+                                # Si la clave se encuentra en el diccionario evaluar superposicion
+                                if clave in limites:
+                                    superposicion= traslape(limites_inicio,limites[clave])
+                                    eval_traslape = False
+                                    if superposicion == False:
+                                        change += 1
+                                        seleccionar = False
 
-                            # Si la clave no se encuentra en el diccionario, seleccionar la especie
-                            if seleccionar == True:
-                                try:
-                                    navigate(prefix3, 1 + change, "input",k)  # Intenta deseleccionar especie
-                                except:
-                                    pass
-                                navigate(prefix3, 0, "input",k)  # Seleccionar especie
-                                change = 0
- 
-                                # Evaluar limites y Superposicion
-                                if eval_traslape == True:
-                                    limites_k = []
-                                    limites_k = driver.execute_script(script_obtener_limites)
-                                    limites[clave] = limites_k
-                                    superposicion= traslape(limites_inicio,limites_k)
+                                # Si la clave no se encuentra en el diccionario, seleccionar la especie
+                                if seleccionar == True:
+                                    try:
+                                        navigate(prefix3, 1 + change, "input",k)  # Intenta deseleccionar especie
+                                    except:
+                                        pass
+                                    navigate(prefix3, 0, "input",k)  # Seleccionar especie
+                                    change = 0
+    
+                                    # Evaluar limites y Superposicion
+                                    if eval_traslape == True:
+                                        limites_k = []
+                                        limites_k = driver.execute_script(script_obtener_limites)
+                                        limites[clave] = limites_k
+                                        superposicion= traslape(limites_inicio,limites_k)
+                                        
+                                if superposicion == True:
+                                    base = driver.current_url.split("/")[-1]
+                                    # Ajustar el Mapa
+                                    driver.execute_script(ajuste_zoom)
+                                    sleep(0.5)
+                                    driver.execute_script(ajuste_coordenadas)
                                     
-                            if superposicion == True:
-                                base = driver.current_url.split("/")[-1]
-                                # Ajustar el Mapa
-                                driver.execute_script(ajuste_zoom)
-                                sleep(0.5)
-                                driver.execute_script(ajuste_coordenadas)
-                                
-                                # Espera a que cargue el mapa
-                                try:
-                                    for i in range(1, 9):
-                                        xpath = '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[' + str(i) + ']'
-                                        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
-                                    sleep(0.1)
-                                except:
-                                    pass
-                                # Verificar si hay presencia de la especie en el poligono para guardar la información
-                                screenshot_k = ""
-                                screenshot_k = capturas.capture_polygon()
+                                    # Espera a que cargue el mapa
+                                    try:
+                                        for i in range(1, 9):
+                                            xpath = '//*[@id="mview-panel"]/div[2]/div[1]/div[3]/div/img[' + str(i) + ']'
+                                            WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                                        sleep(0.1)
+                                    except:
+                                        pass
+                                    # Verificar si hay presencia de la especie en el poligono para guardar la información
+                                    screenshot_k = ""
+                                    screenshot_k = capturas.capture_polygon()
 
-                                if screenshot_k != screenshot_init:
-                                    winsound.Beep(500, 100)  # Reproducir un beep estándar
-                                    
-                                    # Definir ruta de destino
-                                    current_directory = os.getcwd()
-                                    destination_path2 = os.path.join(current_directory, "database", f"{base}.zip")
-                                            
-                                    # Comprobar si ya existe la carpeta database
-                                    database_directory = os.path.join(current_directory, "database")
-                                    if not os.path.exists(database_directory):
-                                        os.makedirs(database_directory)
+                                    if screenshot_k != screenshot_init:
+                                        winsound.Beep(500, 100)  # Reproducir un beep
+                                        
+                                        # Definir ruta de destino
+                                        current_directory = os.getcwd()
+                                        destination_path2 = os.path.join(current_directory, "database", f"{base}.zip")
+                                                
+                                        # Comprobar si ya existe la carpeta database
+                                        database_directory = os.path.join(current_directory, "database")
+                                        if not os.path.exists(database_directory):
+                                            os.makedirs(database_directory)
 
-                                    # Definir URLs de descarga
-                                    url2 = f"http://geoportal.conabio.gob.mx/metadatos/doc/fgdc/{base}.zip"
+                                        # Definir URLs de descarga
+                                        url2 = f"http://geoportal.conabio.gob.mx/metadatos/doc/fgdc/{base}.zip"
+                                        especie = especie_actual
 
-                                    # Guarda el archivo ZIP en la ruta de destino
-                                    response2 = requests.get(url2)
-                                    if response2.status_code == 200:
-                                        with open(destination_path2, "wb") as zip_file:
-                                            zip_file.write(response2.content)
-                                    else:
-                                        print("No se pudo descargar el archivo:", base)
-                                        #break
-                            #sleep(0.5)
+                                        # Guarda el archivo ZIP en la ruta de destino
+                                        response2 = requests.get(url2)
+                                        if response2.status_code == 200:
+                                            with open(destination_path2, "wb") as zip_file:
+                                                zip_file.write(response2.content)
+                                        else:
+                                            print("No se pudo descargar el archivo:", base)
+                            else:
+                                change += 1            
                         except:
                             try:
                                 navigate(prefix3, 1 + change, "input",k)  # Intenta deseleccionar especie
