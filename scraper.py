@@ -188,7 +188,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                                         
                                         # Definir ruta de destino
                                         current_directory = os.getcwd()
-                                        destination_path2 = os.path.join(current_directory, "database", f"{base}.zip")
+                                        destination_path2 = os.path.join(current_directory, "database", f"{especie_actual}.zip")
                                                 
                                         # Comprobar si ya existe la carpeta database
                                         database_directory = os.path.join(current_directory, "database")
