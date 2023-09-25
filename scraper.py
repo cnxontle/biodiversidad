@@ -148,8 +148,6 @@ with open("limites.pkl", modo_apertura) as archivo:
                     for k in range(1, elementos + 1):
                         try:
                             contenido = driver.find_element(By.XPATH, f"{prefix3}/li[{k}]/div/a/span")
-
-
                             clave = contenido.text
                             palabras = clave.split()
                             especie_actual = " ".join(palabras[:2])
