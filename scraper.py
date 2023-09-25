@@ -6,13 +6,19 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-import requests
+import pandas as pd
 import os
 import poligono
 import captura
 import winsound
 import pymsgbox
 import pickle
+from datos import descarga
+
+# Crear un DataFrame vacío
+column_names = ["ID", "Nivel_1", "Nivel_2", "Especie", "Referencias", "URL"]
+df = pd.DataFrame(columns=column_names)
+agregar_filas = []
 
 # Configurar opciones
 opts = Options()
@@ -67,6 +73,8 @@ prefix = '/html/body/div[4]/div/div/div/div[2]/div/div/div/div[2]/ul/li/ul/li[2]
 elementos = 10000
 change = 0
 especie = ""
+procesado = False
+id_especie = 0
 
 # Ajustar posicion y zoom inicial
 valor = pymsgbox.prompt('Ingresa las coordenadas y el zoom separados por comas:',title='Ubicación de Inicio', default='Longitud,Latitud,Zoom')
@@ -111,8 +119,12 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, elementos + 1):
+    for i in range(8, elementos + 1):
         try:
+            contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
+            cont_nivel1 = contenido_nivel1.text
+            palabras_nivel1 = cont_nivel1.split()
+            nivel1 = palabras_nivel1[0] 
             try:
                 navigate(prefix, 1, "img[1]",i)  # Intenta contraer árbol anterior
             except:
@@ -122,6 +134,10 @@ with open("limites.pkl", modo_apertura) as archivo:
 
             for j in range(1, elementos + 1):
                 try:
+                    contenido_nivel2 = driver.find_element(By.XPATH, f"{prefix2}/li[{j}]/div/a/span")
+                    cont_nivel2 = contenido_nivel2.text
+                    palabras_nivel2 = cont_nivel2.split()
+                    nivel2 = palabras_nivel2[0] 
                     try:
                         navigate(prefix2, 1, "img[1]",j)  # Intenta contraer árbol anterior
                     except:
@@ -132,6 +148,8 @@ with open("limites.pkl", modo_apertura) as archivo:
                     for k in range(1, elementos + 1):
                         try:
                             contenido = driver.find_element(By.XPATH, f"{prefix3}/li[{k}]/div/a/span")
+
+
                             clave = contenido.text
                             palabras = clave.split()
                             especie_actual = " ".join(palabras[:2])
@@ -156,16 +174,27 @@ with open("limites.pkl", modo_apertura) as archivo:
                                         pass
                                     navigate(prefix3, 0, "input",k)  # Seleccionar especie
                                     change = 0
+                                    url = driver.current_url
+                                    base = url.split("/")[-1]
     
                                     # Evaluar limites y Superposicion
                                     if eval_traslape == True:
                                         limites_k = []
-                                        limites_k = driver.execute_script(script_obtener_limites)
+
+                                        # Procesar archivo
+                                        descargador = descarga(base)
+                                        descargador.procesar()
+                                        procesado = True
+
+                                        # Acceder a los valores
+                                        limites_k = descargador.limites_k
+                                        origin = descargador.origin
+                                        if limites_k == None:
+                                            limites_k = driver.execute_script(script_obtener_limites)
                                         limites[clave] = limites_k
                                         superposicion= traslape(limites_inicio,limites_k)
                                         
                                 if superposicion == True:
-                                    base = driver.current_url.split("/")[-1]
                                     # Ajustar el Mapa
                                     driver.execute_script(ajuste_zoom)
                                     sleep(0.5)
@@ -185,27 +214,22 @@ with open("limites.pkl", modo_apertura) as archivo:
 
                                     if screenshot_k != screenshot_init:
                                         winsound.Beep(500, 100)  # Reproducir un beep
-                                        
-                                        # Definir ruta de destino
-                                        current_directory = os.getcwd()
-                                        destination_path2 = os.path.join(current_directory, "database", f"{especie_actual}.zip")
-                                                
-                                        # Comprobar si ya existe la carpeta database
-                                        database_directory = os.path.join(current_directory, "database")
-                                        if not os.path.exists(database_directory):
-                                            os.makedirs(database_directory)
-
-                                        # Definir URLs de descarga
-                                        url2 = f"http://geoportal.conabio.gob.mx/metadatos/doc/fgdc/{base}.zip"
+                                        id_especie += 1
                                         especie = especie_actual
 
-                                        # Guarda el archivo ZIP en la ruta de destino
-                                        response2 = requests.get(url2)
-                                        if response2.status_code == 200:
-                                            with open(destination_path2, "wb") as zip_file:
-                                                zip_file.write(response2.content)
-                                        else:
-                                            print("No se pudo descargar el archivo:", base)
+                                        if procesado == False:
+                                            descargador = descarga(base)
+                                            descargador.procesar()
+                                            origin = descargador.origin
+                                            nueva_fila = {
+                                                "ID": id_especie,
+                                                "Nivel_1": nivel1,
+                                                "Nivel_2": nivel2,
+                                                "Especie": especie_actual,
+                                                "Referencias": origin,
+                                                "URL": url,
+                                            }
+                                            agregar_filas.append(nueva_fila)
                             else:
                                 change += 1            
                         except:
@@ -223,4 +247,10 @@ with open("limites.pkl", modo_apertura) as archivo:
         archivo.seek(0)
     pickle.dump(limites, archivo)
 
+# Cerrar el Navegador
 driver.quit()
+
+# Guardar los resultados
+df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
+nombre_archivo = "biodiversidad.csv"
+df.to_csv(nombre_archivo, sep='\t', index=False, encoding="utf-16")
