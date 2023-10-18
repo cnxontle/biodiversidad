@@ -219,12 +219,14 @@ with open("limites.pkl", modo_apertura) as archivo:
                                             descargador = descarga(base)
                                             descargador.procesar()
                                             origin = descargador.origin
+                                            leyenda = descargador.leyenda
                                             nueva_fila = {
                                                 "ID": id_especie,
                                                 "Nivel_1": nivel1,
                                                 "Nivel_2": nivel2,
                                                 "Especie": especie_actual,
                                                 "Referencias": origin,
+                                                "Leyenda": leyenda,
                                                 "URL": url,
                                             }
                                             agregar_filas.append(nueva_fila)

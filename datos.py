@@ -9,11 +9,13 @@ class descarga:
         self.base = base
         self.limites_k = None
         self.origin = None
+        self.leyenda = None
     
     def procesar(self):
         # Definir la URL de descarga
         url = f"http://geoportal.conabio.gob.mx/metadatos/doc/fgdc/{self.base}.zip"
-
+        url2 = f"http://geoportal.conabio.gob.mx/metadatos/doc/recursos/leyenda/{self.base}.png"
+        
         # Descargar el archivo ZIP en la memoria RAM
         response = requests.get(url)
         if response.status_code == 200:
@@ -52,3 +54,15 @@ class descarga:
                     print(f"No se encontró el archivo XML ({xml_file_name}) en el ZIP.")
         else:
             print(f"No se pudo descargar el archivo {self.base}.zip desde la URL:", url)
+
+        # Descargar .png de leyenda en la memoria RAM
+        response2 = requests.get(url2)
+        if response2.status_code == 200:
+            image_data = BytesIO(response2.content)
+            file_size = len(response2.content)
+            if file_size > 600:
+                self.leyenda = "Revisar"
+            else:
+                self.leyenda = "OK"
+        else:
+            print(f"No se pudo descargar el archivo {self.base}.png desde la URL:", url2)
