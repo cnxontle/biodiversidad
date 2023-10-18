@@ -75,6 +75,7 @@ change = 0
 especie = ""
 procesado = False
 id_especie = 0
+revisar = False
 
 # Ajustar posicion y zoom inicial
 valor = pymsgbox.prompt('Ingresa las coordenadas y el zoom separados por comas:',title='Ubicación de Inicio', default='Longitud,Latitud,Zoom')
@@ -119,7 +120,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, elementos + 1):
+    for i in range(7, elementos + 1):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -247,10 +248,37 @@ with open("limites.pkl", modo_apertura) as archivo:
         archivo.seek(0)
     pickle.dump(limites, archivo)
 
-# Cerrar el Navegador
-driver.quit()
+# Aqui vamos a verificar si existen filas que necesitan ser revisadas
+for fila in agregar_filas:
+    if fila["Leyenda"] == "Revisar":
+        revisar = True
+        break 
+
+if revisar == True:
+    response = pymsgbox.confirm("¿Deseas iniciar el asistente de revisión?", "Hay registros que se necesitan revisar", ["Sí", "No"])
+    if response == "Sí":
+        #Iniciar el Asistente
+        filas_a_eliminar = []
+        for fila in agregar_filas:
+            if fila["Leyenda"] == "Revisar":
+                driver.get(fila["URL"])
+                msj_inicio = driver.find_element(By.XPATH, '//*[@id="ext-gen231"]')
+                sleep(0.5)
+                msj_inicio.click()
+                driver.execute_script(ajuste_zoom)
+                sleep(0.5)
+                driver.execute_script(ajuste_coordenadas)
+                response2 = pymsgbox.confirm("¿Deseas conservar este registro?", "Asistente de revisión", ["Sí", "No"])
+                if response2 == "No":
+                    filas_a_eliminar.append(fila)
+
+        for fila_para_eliminar in filas_a_eliminar:
+            agregar_filas.remove(fila_para_eliminar)
+
 
 # Guardar los resultados
 df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
-nombre_archivo = "biodiversidad.csv"
-df.to_csv(nombre_archivo, sep='\t', index=False, encoding="utf-16")
+df.to_excel("tu_archivo.xlsx", sheet_name=valor, index=False)
+
+# Cerrar el Navegador
+driver.quit()
