@@ -6,6 +6,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import os
 import poligono
@@ -16,7 +17,7 @@ import pickle
 from datos import descarga
 
 # Crear un DataFrame vacío
-column_names = ["ID", "Nivel_1", "Nivel_2", "Especie", "Referencias", "URL"]
+column_names = ["ID", "Nivel_1", "Nivel_2", "Especie", "Red List", "CITES", "NOM 059", "Referencias", "Leyenda", "URL"]
 df = pd.DataFrame(columns=column_names)
 agregar_filas = []
 
@@ -120,7 +121,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(7, elementos + 1):
+    for i in range(1, elementos + 1):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -226,6 +227,9 @@ with open("limites.pkl", modo_apertura) as archivo:
                                                 "Nivel_1": nivel1,
                                                 "Nivel_2": nivel2,
                                                 "Especie": especie_actual,
+                                                "Red List": "",
+                                                "CITES": "",
+                                                "NOM 059": "",
                                                 "Referencias": origin,
                                                 "Leyenda": leyenda,
                                                 "URL": url,
@@ -248,14 +252,15 @@ with open("limites.pkl", modo_apertura) as archivo:
         archivo.seek(0)
     pickle.dump(limites, archivo)
 
+#REVISAR#
 # Aqui vamos a verificar si existen filas que necesitan ser revisadas
 for fila in agregar_filas:
     if fila["Leyenda"] == "Revisar":
         revisar = True
         break 
-
 if revisar == True:
-    response = pymsgbox.confirm("¿Deseas iniciar el asistente de revisión?", "Hay registros que se necesitan revisar", ["Sí", "No"])
+    response = pymsgbox.confirm("¿Deseas revisar las probabilidades de ocurrencia?", "Hay registros que se necesitan revisar", ["Sí", "No"])
+    
     if response == "Sí":
         #Iniciar el Asistente
         filas_a_eliminar = []
@@ -271,14 +276,52 @@ if revisar == True:
                 response2 = pymsgbox.confirm("¿Deseas conservar este registro?", "Asistente de revisión", ["Sí", "No"])
                 if response2 == "No":
                     filas_a_eliminar.append(fila)
-
+                else:
+                    fila["Leyenda"] = "Revisado"
         for fila_para_eliminar in filas_a_eliminar:
             agregar_filas.remove(fila_para_eliminar)
+##REVISAR##
 
+#RED LIST#
+driver.get("https://www.iucnredlist.org/")
+for fila in agregar_filas:
+    evaluar_especie = fila["Especie"]
+    busqueda_de_especie = driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/form/input')
+    busqueda_de_especie.clear()
+    busqueda_de_especie.send_keys(evaluar_especie)
+    busqueda_de_especie.send_keys(Keys.RETURN)
+    try:
+        estatus = driver.find_element(By.XPATH,'//*[@id="redlist-js"]/div/div/div[2]/section/div[2]/article/div/a')
+        texto_del_estatus = estatus.text
+        if texto_del_estatus == "lc":
+            texto_del_estatus = "Menor Preocupación"
+        elif texto_del_estatus == "dd":
+            texto_del_estatus = "Faltan Datos"
+        elif texto_del_estatus == "nt":
+            texto_del_estatus = "Casi Amenazado"
+        elif texto_del_estatus == "vu":
+            texto_del_estatus = "Vulnerable"
+        elif texto_del_estatus == "ed":
+            texto_del_estatus = "En Peligro"
+        elif texto_del_estatus == "cr":
+            texto_del_estatus = "En Peligro Crítico"
+        elif texto_del_estatus == "ew":
+            texto_del_estatus = "Extinto en la Naturaleza"
+        elif texto_del_estatus == "ex":
+            texto_del_estatus = "Extinto"
+        elif texto_del_estatus == "ne":
+            texto_del_estatus = "No Evaluado"
+
+        fila["Red List"] = texto_del_estatus
+        sleep(0.5)
+    except:
+        fila["Red List"] = "No Encontrado"
+        sleep(0.5)
+#RED LIST#
 
 # Guardar los resultados
 df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
-df.to_excel("tu_archivo.xlsx", sheet_name=valor, index=False)
+df.to_excel("biodiversidad.xlsx", sheet_name=valor, index=False)
 
 # Cerrar el Navegador
 driver.quit()
