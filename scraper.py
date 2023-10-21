@@ -6,7 +6,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import os
 import poligono
@@ -317,7 +316,7 @@ for fila in agregar_filas:
             texto_del_estatus = "Not Evaluated"
         fila["Red List"] = texto_del_estatus
     except:
-        fila["Red List"] = "No Encontrado"
+        fila["Red List"] = ""
         
 #RED LIST#
 
