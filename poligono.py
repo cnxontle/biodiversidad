@@ -66,7 +66,9 @@ class PolygonDrawer:
                 
     def get_polygon_info(self):
         return self.polygon_info
-
+    
+    def destroy(self):
+        self.root.destroy()
 
 if __name__ == "__main__":
 
