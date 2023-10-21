@@ -121,7 +121,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, elementos + 1):
+    for i in range(1, elementos):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -134,7 +134,7 @@ with open("limites.pkl", modo_apertura) as archivo:
             navigate(prefix, 0, "img[1]",i)  # Expandir árbol
             prefix2 = f"{prefix}/li[{i}]/ul"
 
-            for j in range(1, elementos + 1):
+            for j in range(1, elementos):
                 try:
                     contenido_nivel2 = driver.find_element(By.XPATH, f"{prefix2}/li[{j}]/div/a/span")
                     cont_nivel2 = contenido_nivel2.text
@@ -147,7 +147,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                     navigate(prefix2, 0, "img[1]",j)  # Expandir árbol
                     prefix3 = f"{prefix2}/li[{j}]/ul"
 
-                    for k in range(1, elementos + 1):
+                    for k in range(1, elementos):
                         try:
                             contenido = driver.find_element(By.XPATH, f"{prefix3}/li[{k}]/div/a/span")
                             clave = contenido.text
@@ -258,9 +258,10 @@ for fila in agregar_filas:
     if fila["Leyenda"] == "Revisar":
         revisar = True
         break 
+drawer.destroy()
+
 if revisar == True:
     response = pymsgbox.confirm("¿Deseas revisar las probabilidades de ocurrencia?", "Hay registros que se necesitan revisar", ["Sí", "No"])
-    
     if response == "Sí":
         #Iniciar el Asistente
         filas_a_eliminar = []
@@ -284,39 +285,40 @@ if revisar == True:
 
 #RED LIST#
 driver.get("https://www.iucnredlist.org/")
+busqueda_de_especie = driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/form/input')
 for fila in agregar_filas:
     evaluar_especie = fila["Especie"]
-    busqueda_de_especie = driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/form/input')
     busqueda_de_especie.clear()
+    sleep(0.5)
     busqueda_de_especie.send_keys(evaluar_especie)
-    busqueda_de_especie.send_keys(Keys.RETURN)
+    
+    sleep(1.5)
     try:
-        estatus = driver.find_element(By.XPATH,'//*[@id="redlist-js"]/div/div/div[2]/section/div[2]/article/div/a')
+        estatus = driver.find_element(By.XPATH,'//*[@id="nav-search"]/div/div/section/ol/li/span[3]')
         texto_del_estatus = estatus.text
-        if texto_del_estatus == "lc":
-            texto_del_estatus = "Menor Preocupación"
-        elif texto_del_estatus == "dd":
-            texto_del_estatus = "Faltan Datos"
-        elif texto_del_estatus == "nt":
-            texto_del_estatus = "Casi Amenazado"
-        elif texto_del_estatus == "vu":
+        print (texto_del_estatus)
+        if texto_del_estatus == "<LC>":
+            texto_del_estatus = "Least Concern"
+        elif texto_del_estatus == "<DD>":
+            texto_del_estatus = "Data Deficent"
+        elif texto_del_estatus == "<NT>":
+            texto_del_estatus = "Near Threatened"
+        elif texto_del_estatus == "<VU>":
             texto_del_estatus = "Vulnerable"
-        elif texto_del_estatus == "ed":
-            texto_del_estatus = "En Peligro"
-        elif texto_del_estatus == "cr":
-            texto_del_estatus = "En Peligro Crítico"
-        elif texto_del_estatus == "ew":
-            texto_del_estatus = "Extinto en la Naturaleza"
-        elif texto_del_estatus == "ex":
-            texto_del_estatus = "Extinto"
-        elif texto_del_estatus == "ne":
-            texto_del_estatus = "No Evaluado"
-
+        elif texto_del_estatus == "<EN>":
+            texto_del_estatus = "Endangered"
+        elif texto_del_estatus == "<CR>":
+            texto_del_estatus = "Critically Endangered"
+        elif texto_del_estatus == "<EW>":
+            texto_del_estatus = "Extinct in the Wild"
+        elif texto_del_estatus == "<EX>":
+            texto_del_estatus = "Extinct"
+        elif texto_del_estatus == "<NE>":
+            texto_del_estatus = "Not Evaluated"
         fila["Red List"] = texto_del_estatus
-        sleep(0.5)
     except:
         fila["Red List"] = "No Encontrado"
-        sleep(0.5)
+        
 #RED LIST#
 
 # Guardar los resultados
