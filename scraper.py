@@ -10,6 +10,7 @@ import pandas as pd
 import os
 import poligono
 import captura
+import estatus
 import winsound
 import pymsgbox
 import pickle
@@ -120,7 +121,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, elementos):
+    for i in range(1, 2):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -282,47 +283,18 @@ if revisar == True:
             agregar_filas.remove(fila_para_eliminar)
 ##REVISAR##
 
+driver.quit()
+
 #RED LIST#
-driver.get("https://www.iucnredlist.org/")
-busqueda_de_especie = driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/form/input')
+status_scraper = estatus.StatusScraper()
 for fila in agregar_filas:
     evaluar_especie = fila["Especie"]
-    busqueda_de_especie.clear()
-    sleep(0.5)
-    busqueda_de_especie.send_keys(evaluar_especie)
-    
-    sleep(1.5)
-    try:
-        estatus = driver.find_element(By.XPATH,'//*[@id="nav-search"]/div/div/section/ol/li/span[3]')
-        texto_del_estatus = estatus.text
-        print (texto_del_estatus)
-        if texto_del_estatus == "<LC>":
-            texto_del_estatus = "Least Concern"
-        elif texto_del_estatus == "<DD>":
-            texto_del_estatus = "Data Deficent"
-        elif texto_del_estatus == "<NT>":
-            texto_del_estatus = "Near Threatened"
-        elif texto_del_estatus == "<VU>":
-            texto_del_estatus = "Vulnerable"
-        elif texto_del_estatus == "<EN>":
-            texto_del_estatus = "Endangered"
-        elif texto_del_estatus == "<CR>":
-            texto_del_estatus = "Critically Endangered"
-        elif texto_del_estatus == "<EW>":
-            texto_del_estatus = "Extinct in the Wild"
-        elif texto_del_estatus == "<EX>":
-            texto_del_estatus = "Extinct"
-        elif texto_del_estatus == "<NE>":
-            texto_del_estatus = "Not Evaluated"
-        fila["Red List"] = texto_del_estatus
-    except:
-        fila["Red List"] = ""
-        
+    estado_conservacion = status_scraper.get_red_list_status(evaluar_especie)
+    fila["Red List"] = estado_conservacion
+status_scraper.close()
 #RED LIST#
 
 # Guardar los resultados
 df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
 df.to_excel("biodiversidad.xlsx", sheet_name=valor, index=False)
 
-# Cerrar el Navegador
-driver.quit()
