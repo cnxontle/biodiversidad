@@ -15,11 +15,17 @@ import winsound
 import pymsgbox
 import pickle
 from datos import descarga
+import threading
+import queue
 
 # Crear un DataFrame vacío
 column_names = ["ID", "Nivel_1", "Nivel_2", "Especie", "Red List", "CITES", "NOM 059", "Referencias", "Leyenda", "URL"]
 df = pd.DataFrame(columns=column_names)
 agregar_filas = []
+red_list = {}
+especies_queue = queue.Queue()
+status_scraper = estatus.StatusScraper()
+terminate_thread = False
 
 # Configurar opciones
 opts = Options()
@@ -62,6 +68,21 @@ def traslape(limites_mapa1,limites_mapa2):
             superposicion = False
     return superposicion
 
+#Evaluar estatus de conservación en la Red List
+def status_scraper_red_list():
+    while not terminate_thread:
+        try:
+            evaluar_especie = especies_queue.get()
+            estado_conservacion = status_scraper.get_red_list_status(evaluar_especie)
+            red_list[evaluar_especie] = estado_conservacion
+        except queue.Empty:
+            continue    # Si la cola está vacía, continuará esperando
+
+# Crea un hilo para ejecutar status_scraper_red_list
+status_thread = threading.Thread(target=status_scraper_red_list)
+status_thread.daemon = True
+status_thread.start()
+
 # Acceso a la página
 driver.maximize_window()
 driver.get('http://www.conabio.gob.mx/informacion/gis/?vns=gis_root/biodiv/distpot/')
@@ -76,7 +97,7 @@ change = 0
 especie = ""
 procesado = False
 id_especie = 0
-revisar = False
+revisar = 0
 
 # Ajustar posicion y zoom inicial
 valor = pymsgbox.prompt('Ingresa las coordenadas y el zoom separados por comas:',title='Ubicación de Inicio', default='Longitud,Latitud,Zoom')
@@ -121,7 +142,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, 2):
+    for i in range(1, elementos):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -216,6 +237,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                                         winsound.Beep(500, 100)  # Reproducir un beep
                                         id_especie += 1
                                         especie = especie_actual
+                                        especies_queue.put(especie_actual)
 
                                         if procesado == False:
                                             descargador = descarga(base)
@@ -253,15 +275,16 @@ with open("limites.pkl", modo_apertura) as archivo:
     pickle.dump(limites, archivo)
 
 #REVISAR#
-# Aqui vamos a verificar si existen filas que necesitan ser revisadas
+# Consolidar diccionarios y verificar filas que necesitan ser revisadas
 for fila in agregar_filas:
+    consulta_de_especie = fila["Especie"]
+    fila["Red List"] = red_list[consulta_de_especie]
     if fila["Leyenda"] == "Revisar":
-        revisar = True
-        break 
+        revisar += 1
 drawer.destroy()
 
-if revisar == True:
-    response = pymsgbox.confirm("¿Deseas revisar las probabilidades de ocurrencia?", "Hay registros que se necesitan revisar", ["Sí", "No"])
+if revisar > 0:
+    response = pymsgbox.confirm("¿Deseas revisar las probabilidades de ocurrencia?", f"Hay {revisar} registros que se necesitan revisar", ["Sí", "No"])
     if response == "Sí":
         #Iniciar el Asistente
         filas_a_eliminar = []
@@ -283,18 +306,12 @@ if revisar == True:
             agregar_filas.remove(fila_para_eliminar)
 ##REVISAR##
 
-driver.quit()
-
-#RED LIST#
-status_scraper = estatus.StatusScraper()
-for fila in agregar_filas:
-    evaluar_especie = fila["Especie"]
-    estado_conservacion = status_scraper.get_red_list_status(evaluar_especie)
-    fila["Red List"] = estado_conservacion
-status_scraper.close()
-#RED LIST#
-
 # Guardar los resultados
 df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
 df.to_excel("biodiversidad.xlsx", sheet_name=valor, index=False)
 
+#Finalizar programa
+terminate_thread = True
+status_thread.join(timeout=5)
+driver.quit()
+status_scraper.close()
