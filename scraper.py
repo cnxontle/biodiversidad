@@ -277,8 +277,18 @@ with open("limites.pkl", modo_apertura) as archivo:
 #REVISAR#
 # Consolidar diccionarios y verificar filas que necesitan ser revisadas
 for fila in agregar_filas:
+    #Consolidar Red list
     consulta_de_especie = fila["Especie"]
     fila["Red List"] = red_list[consulta_de_especie]
+
+    #Consolidar NOM-059
+    with open('nom.pkl', 'rb') as file:
+        loaded_data = pickle.load(file)
+        if consulta_de_especie in loaded_data:
+            estatus_nom = loaded_data[consulta_de_especie][1]
+            fila["NOM 059"] = estatus_nom
+
+    #Verificar filas
     if fila["Leyenda"] == "Revisar":
         revisar += 1
 drawer.destroy()
