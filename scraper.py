@@ -274,7 +274,6 @@ with open("limites.pkl", modo_apertura) as archivo:
         archivo.seek(0)
     pickle.dump(limites, archivo)
 
-#REVISAR#
 # Consolidar diccionarios y verificar filas que necesitan ser revisadas
 for fila in agregar_filas:
     #Consolidar Red list
@@ -293,6 +292,7 @@ for fila in agregar_filas:
         revisar += 1
 drawer.destroy()
 
+#REVISAR#
 if revisar > 0:
     response = pymsgbox.confirm("¿Deseas revisar las probabilidades de ocurrencia?", f"Hay {revisar} registros que se necesitan revisar", ["Sí", "No"])
     if response == "Sí":
@@ -317,10 +317,19 @@ if revisar > 0:
 ##REVISAR##
 
 # Guardar los resultados
-df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
-df.to_excel("biodiversidad.xlsx", sheet_name=valor, index=False)
+while True:
+    try:
+        df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
+        df.to_excel("biodiversidad.xlsx", sheet_name=valor, index=False)
+    except PermissionError:
+        message = "El archivo está siendo utilizado por otro proceso. Por favor, ciérrelo y haga clic en 'Aceptar' para volver a intentarlo."
+        pymsgbox.alert(message, "Error de Permiso")
+    else:
+        break
 
 #Finalizar programa
+while not especies_queue.empty():
+    pass
 terminate_thread = True
 status_thread.join(timeout=5)
 driver.quit()
