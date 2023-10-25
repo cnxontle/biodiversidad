@@ -10,7 +10,7 @@ import pandas as pd
 import os
 import poligono
 import captura
-import estatus
+import redlist
 import winsound
 import pymsgbox
 import pickle
@@ -24,7 +24,7 @@ df = pd.DataFrame(columns=column_names)
 agregar_filas = []
 red_list = {}
 especies_queue = queue.Queue()
-status_scraper = estatus.StatusScraper()
+status_scraper = redlist.StatusScraper()
 terminate_thread = False
 
 # Configurar opciones
@@ -36,10 +36,10 @@ opts.add_argument("--disk-cache-size=0")  # Establecer el tamaño de la caché e
 opts.add_argument("--media-cache-size=0")  # Establecer el tamaño de la caché de medios en 0
 
 # Descarga automática del ChromeDriver
-driver = webdriver.Chrome(
-    service=Service(ChromeDriverManager().install()),
-    options=opts
-)
+try:
+    driver = webdriver.Chrome(options=opts)
+except:
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=opts)
 
 # Función para navegar en el arbol 
 def navigate(prefix, route, target,i):
@@ -142,7 +142,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, elementos):
+    for i in range(4, 5):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -274,6 +274,12 @@ with open("limites.pkl", modo_apertura) as archivo:
         archivo.seek(0)
     pickle.dump(limites, archivo)
 
+#terminar hilo red list
+while not especies_queue.empty():
+    pass
+terminate_thread = True
+status_thread.join(timeout=5)
+
 # Consolidar diccionarios y verificar filas que necesitan ser revisadas
 for fila in agregar_filas:
     #Consolidar Red list
@@ -328,9 +334,6 @@ while True:
         break
 
 #Finalizar programa
-while not especies_queue.empty():
-    pass
-terminate_thread = True
-status_thread.join(timeout=5)
+
 driver.quit()
 status_scraper.close()
