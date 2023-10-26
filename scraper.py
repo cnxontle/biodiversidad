@@ -10,6 +10,7 @@ import pandas as pd
 import os
 import poligono
 import captura
+import cites
 import redlist
 import winsound
 import pymsgbox
@@ -22,10 +23,16 @@ import queue
 column_names = ["ID", "Nivel_1", "Nivel_2", "Especie", "Red List", "CITES", "NOM 059", "Referencias", "Leyenda", "URL"]
 df = pd.DataFrame(columns=column_names)
 agregar_filas = []
+
+# Configurar scrapers secundarios
 red_list = {}
+cites_list = {}
 especies_queue = queue.Queue()
+cites_queue = queue.Queue()
 status_scraper = redlist.StatusScraper()
+cites_scraper = cites.CitesScraper()
 terminate_thread = False
+terminate_thread_cites = False
 
 # Configurar opciones
 opts = Options()
@@ -68,7 +75,7 @@ def traslape(limites_mapa1,limites_mapa2):
             superposicion = False
     return superposicion
 
-#Evaluar estatus de conservación en la Red List
+# Evaluar estatus de conservación en la Red List
 def status_scraper_red_list():
     while not terminate_thread:
         try:
@@ -78,10 +85,25 @@ def status_scraper_red_list():
         except queue.Empty:
             continue    # Si la cola está vacía, continuará esperando
 
+# Evaluar estatus en cites
+def status_scraper_cites():
+    while not terminate_thread_cites:
+        try:
+            evaluar_especie = cites_queue.get()
+            estado_conservacion = cites_scraper.get_cites_status(evaluar_especie)
+            cites_list[evaluar_especie] = estado_conservacion
+        except queue.Empty:
+            continue    # Si la cola está vacía, continuará esperando
+
 # Crea un hilo para ejecutar status_scraper_red_list
 status_thread = threading.Thread(target=status_scraper_red_list)
 status_thread.daemon = True
 status_thread.start()
+
+# Crea un hilo para ejecutar status_scraper_cites
+status_thread_cites = threading.Thread(target=status_scraper_cites)
+status_thread_cites.daemon = True
+status_thread_cites.start()
 
 # Acceso a la página
 driver.maximize_window()
@@ -238,7 +260,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                                         id_especie += 1
                                         especie = especie_actual
                                         especies_queue.put(especie_actual)
-
+                                        cites_queue.put(especie_actual)
                                         if procesado == False:
                                             descargador = descarga(base)
                                             descargador.procesar()
@@ -273,6 +295,8 @@ with open("limites.pkl", modo_apertura) as archivo:
     if modo_apertura == "rb+":
         archivo.seek(0)
     pickle.dump(limites, archivo)
+drawer.destroy()
+
 
 #terminar hilo red list
 while not especies_queue.empty():
@@ -280,11 +304,20 @@ while not especies_queue.empty():
 terminate_thread = True
 status_thread.join(timeout=5)
 
+#terminar hilo cites
+while not cites_queue.empty():
+    pass
+terminate_thread_cites = True
+status_thread_cites.join(timeout=5)
+
+
 # Consolidar diccionarios y verificar filas que necesitan ser revisadas
 for fila in agregar_filas:
-    #Consolidar Red list
+    
+    #Consolidar Red list y cites
     consulta_de_especie = fila["Especie"]
     fila["Red List"] = red_list[consulta_de_especie]
+    fila["CITES"] = cites_list[consulta_de_especie]
 
     #Consolidar NOM-059
     with open('nom.pkl', 'rb') as file:
@@ -296,7 +329,6 @@ for fila in agregar_filas:
     #Verificar filas
     if fila["Leyenda"] == "Revisar":
         revisar += 1
-drawer.destroy()
 
 #REVISAR#
 if revisar > 0:
@@ -334,6 +366,5 @@ while True:
         break
 
 #Finalizar programa
-
 driver.quit()
 status_scraper.close()
