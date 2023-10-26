@@ -1,17 +1,14 @@
 from time import sleep
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 import os
 import poligono
 import captura
 import cites
 import redlist
+import navegador
 import winsound
 import pymsgbox
 import pickle
@@ -34,19 +31,9 @@ cites_scraper = cites.CitesScraper()
 terminate_thread = False
 terminate_thread_cites = False
 
-# Configurar opciones
-opts = Options()
-opts.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
-opts.add_argument("--disable-cache")  # Deshabilitar la caché
-opts.add_argument("--disable-application-cache")  # Deshabilitar la caché de aplicaciones
-opts.add_argument("--disk-cache-size=0")  # Establecer el tamaño de la caché en 0
-opts.add_argument("--media-cache-size=0")  # Establecer el tamaño de la caché de medios en 0
-
-# Descarga automática del ChromeDriver
-try:
-    driver = webdriver.Chrome(options=opts)
-except:
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=opts)
+# Configurar driver
+servicio_driver = navegador.Servicio(headless=False)
+driver = servicio_driver.driver
 
 # Función para navegar en el arbol 
 def navigate(prefix, route, target,i):
@@ -164,7 +151,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(4, 5):
+    for i in range(1, elementos):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -297,7 +284,6 @@ with open("limites.pkl", modo_apertura) as archivo:
     pickle.dump(limites, archivo)
 drawer.destroy()
 
-
 #terminar hilo red list
 while not especies_queue.empty():
     pass
@@ -309,7 +295,6 @@ while not cites_queue.empty():
     pass
 terminate_thread_cites = True
 status_thread_cites.join(timeout=5)
-
 
 # Consolidar diccionarios y verificar filas que necesitan ser revisadas
 for fila in agregar_filas:
@@ -355,13 +340,16 @@ if revisar > 0:
 ##REVISAR##
 
 # Guardar los resultados
+concatenar = False
 while True:
     try:
-        df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
+        if concatenar == False:
+            df = pd.concat([df, pd.DataFrame(agregar_filas)], ignore_index=True)
         df.to_excel("biodiversidad.xlsx", sheet_name=valor, index=False)
     except PermissionError:
         message = "El archivo está siendo utilizado por otro proceso. Por favor, ciérrelo y haga clic en 'Aceptar' para volver a intentarlo."
         pymsgbox.alert(message, "Error de Permiso")
+        concatenar = True
     else:
         break
 
