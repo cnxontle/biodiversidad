@@ -6,9 +6,9 @@ class StatusScraper:
     def __init__(self):
         servicio_driver = navegador.Servicio()
         self.driver = servicio_driver.driver
-        self.driver.get("https://www.iucnredlist.org/")
 
     def get_red_list_status(self, species_name):
+        self.driver.get("https://www.iucnredlist.org/")
         busqueda_de_especie = self.driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/form/input')
         busqueda_de_especie.clear()
         sleep(0.5)
