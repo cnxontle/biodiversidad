@@ -151,7 +151,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, elementos):
+    for i in range(1, 3):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
@@ -298,7 +298,6 @@ status_thread_cites.join(timeout=5)
 
 # Consolidar diccionarios y verificar filas que necesitan ser revisadas
 for fila in agregar_filas:
-    
     #Consolidar Red list y cites
     consulta_de_especie = fila["Especie"]
     fila["Red List"] = red_list[consulta_de_especie]
@@ -315,14 +314,14 @@ for fila in agregar_filas:
     if fila["Leyenda"] == "Revisar":
         revisar += 1
 
-#REVISAR#
+# Revisar
 if revisar > 0:
-    response = pymsgbox.confirm("¿Deseas revisar las probabilidades de ocurrencia?", f"Hay {revisar} registros que se necesitan revisar", ["Sí", "No"])
-    if response == "Sí":
-        #Iniciar el Asistente
-        filas_a_eliminar = []
+    response = pymsgbox.confirm("¿Qué tipo de revisión quieres hacer?", f"Hay {revisar} registros que se necesitan revisar", ["Rapida", "Completa", "Omitir"])
+    filas_a_eliminar = []
+    if response in ["Rapida", "Completa"]:
+        # Iniciar el Asistente
         for fila in agregar_filas:
-            if fila["Leyenda"] == "Revisar":
+            if fila["Leyenda"] == "Revisar" and (response == "Completa" or fila["Referencias"].startswith("E.")):
                 driver.get(fila["URL"])
                 msj_inicio = driver.find_element(By.XPATH, '//*[@id="ext-gen231"]')
                 sleep(0.5)
@@ -335,9 +334,8 @@ if revisar > 0:
                     filas_a_eliminar.append(fila)
                 else:
                     fila["Leyenda"] = "Revisado"
-        for fila_para_eliminar in filas_a_eliminar:
-            agregar_filas.remove(fila_para_eliminar)
-##REVISAR##
+    for fila_para_eliminar in filas_a_eliminar:
+        agregar_filas.remove(fila_para_eliminar)
 
 # Guardar los resultados
 concatenar = False
