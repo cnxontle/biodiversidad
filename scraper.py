@@ -151,7 +151,7 @@ with open("limites.pkl", modo_apertura) as archivo:
         limites = {}
 
 # Busqueda de especies
-    for i in range(1, 3):
+    for i in range(1, elementos):
         try:
             contenido_nivel1 = driver.find_element(By.XPATH, f"{prefix}/li[{i}]/div/a/span")
             cont_nivel1 = contenido_nivel1.text
