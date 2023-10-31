@@ -17,34 +17,43 @@ class StatusScraper:
         sleep (0.5)
         texto_del_estatus = ""
         busqueda_de_especie.send_keys(species_name)
-        busqueda_de_especie.send_keys(Keys.RETURN)
-        WebDriverWait(self.driver, 5).until_not(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
+        sleep(2)
         try:
-            WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
-            script = 'return document.evaluate(\'//*[@class="list-results__item"]//a[1]\', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;'
-            sleep(1)
-            texto_del_estatus = self.driver.execute_script(script)
-            if texto_del_estatus == "lc":
-                texto_del_estatus = "Least Concern"
-            elif texto_del_estatus == "dd":
-                texto_del_estatus = "Data Deficent"
-            elif texto_del_estatus == "nt":
-                texto_del_estatus = "Near Threatened"
-            elif texto_del_estatus == "vu":
-                texto_del_estatus = "Vulnerable"
-            elif texto_del_estatus == "en":
-                texto_del_estatus = "Endangered"
-            elif texto_del_estatus == "cr":
-                texto_del_estatus = "Critically Endangered"
-            elif texto_del_estatus == "ew":
-                texto_del_estatus = "Extinct in the Wild"
-            elif texto_del_estatus == "ex":
-                texto_del_estatus = "Extinct"
-            elif texto_del_estatus == "ne":
-                texto_del_estatus = "Not Evaluated"
-            return texto_del_estatus
+            estatus = self.driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/div/section/ol/li/span[3]/strong')
+            texto_del_estatus = estatus.text
+            texto_del_estatus = texto_del_estatus.lower()
         except:
-            return ""
+            try:
+                busqueda_de_especie.send_keys(Keys.RETURN)
+                WebDriverWait(self.driver, 5).until_not(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
+                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
+                script = 'return document.evaluate(\'//*[@class="list-results__item"]//a[1]\', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;'
+                sleep(1)
+                texto_del_estatus = self.driver.execute_script(script)
+            except:
+                texto_del_estatus = ""
+
+        if texto_del_estatus == "lc":
+            texto_del_estatus = "Least Concern"
+        elif texto_del_estatus == "dd":
+            texto_del_estatus = "Data Deficent"
+        elif texto_del_estatus == "nt":
+            texto_del_estatus = "Near Threatened"
+        elif texto_del_estatus == "vu":
+            texto_del_estatus = "Vulnerable"
+        elif texto_del_estatus == "en":
+            texto_del_estatus = "Endangered"
+        elif texto_del_estatus == "cr":
+            texto_del_estatus = "Critically Endangered"
+        elif texto_del_estatus == "ew":
+            texto_del_estatus = "Extinct in the Wild"
+        elif texto_del_estatus == "ex":
+            texto_del_estatus = "Extinct"
+        elif texto_del_estatus == "ne":
+            texto_del_estatus = "Not Evaluated"
+        return texto_del_estatus
+
+
 
     def close(self):
         self.driver.quit()
