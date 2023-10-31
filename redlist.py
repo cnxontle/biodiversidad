@@ -10,7 +10,8 @@ class StatusScraper:
         servicio_driver = navegador.Servicio()
         self.driver = servicio_driver.driver
         self.driver.get("https://www.iucnredlist.org/search/list?query=&searchType=species")
-
+        self.script = 'return document.evaluate(\'//*[@class="list-results__item"]//a[1]\', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;'
+    
     def get_red_list_status(self, species_name):
         busqueda_de_especie = self.driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/form/input')
         busqueda_de_especie.clear()
@@ -23,16 +24,13 @@ class StatusScraper:
             texto_del_estatus = estatus.text
             texto_del_estatus = texto_del_estatus.lower()
         except:
+            busqueda_de_especie.send_keys(Keys.RETURN)
+            WebDriverWait(self.driver, 5).until_not(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
             try:
-                busqueda_de_especie.send_keys(Keys.RETURN)
-                WebDriverWait(self.driver, 5).until_not(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
-                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
-                script = 'return document.evaluate(\'//*[@class="list-results__item"]//a[1]\', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;'
-                sleep(1)
-                texto_del_estatus = self.driver.execute_script(script)
+                WebDriverWait(self.driver, 5).until(EC.visibility_of_all_elements_located((By.XPATH, '//*[@class="list-results__item"]')))
+                texto_del_estatus = self.driver.execute_script(self.script)
             except:
                 texto_del_estatus = ""
-
         if texto_del_estatus == "lc":
             texto_del_estatus = "Least Concern"
         elif texto_del_estatus == "dd":
@@ -52,8 +50,6 @@ class StatusScraper:
         elif texto_del_estatus == "ne":
             texto_del_estatus = "Not Evaluated"
         return texto_del_estatus
-
-
 
     def close(self):
         self.driver.quit()
