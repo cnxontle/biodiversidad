@@ -24,11 +24,11 @@ class StatusScraper:
             texto_del_estatus = estatus.text
             texto_del_estatus = texto_del_estatus.lower()
         except:
-            busqueda_de_especie.send_keys(Keys.RETURN)
-            WebDriverWait(self.driver, 5).until_not(EC.presence_of_element_located((By.XPATH, '//*[@class="list-results__item"]')))
+            sleep(2)
             try:
-                WebDriverWait(self.driver, 5).until(EC.visibility_of_all_elements_located((By.XPATH, '//*[@class="list-results__item"]')))
-                texto_del_estatus = self.driver.execute_script(self.script)
+                estatus = self.driver.find_element(By.XPATH, '//*[@id="nav-search"]/div/div/section/ol/li/span[3]/strong')
+                texto_del_estatus = estatus.text
+                texto_del_estatus = texto_del_estatus.lower()
             except:
                 texto_del_estatus = ""
         if texto_del_estatus == "lc":
