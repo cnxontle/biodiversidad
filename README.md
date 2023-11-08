@@ -1,5 +1,5 @@
-# biodiversidad
-El objetivo de este proyecto es recopilar información de la biodiversidad potencial y el estatus de las especies a partir de un polígono dado en el mapa
+# Objetivo
+Recopilar información de la biodiversidad potencial y el estatus de las especies a partir de un polígono dado en el mapa
 
 ## Guía de Configuración
 
