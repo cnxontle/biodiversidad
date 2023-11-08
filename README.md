@@ -1,5 +1,5 @@
 ## Objetivo
-Recopilar información de la biodiversidad potencial basada en metadatos de la CONABIO, ademas del estatus de las especies, a partir de un polígono dado en el mapa
+Obtener datos acerca de la biodiversidad potencial en una región geográfica específica utilizando metadatos proporcionados por la CONABIO, así como determinar el estado de conservación de las especies presentes dentro de un polígono del mapa.
 
 ## Guía de Configuración
 
