@@ -183,6 +183,7 @@ with open("limites.pkl", modo_apertura) as archivo:
                             clave = contenido.text
                             palabras = clave.split()
                             especie_actual = " ".join(palabras[:2])
+                            especie_actual = especie_actual.replace(".", "")
                             
                             if especie != especie_actual:
                                 seleccionar = True
